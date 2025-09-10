@@ -1,5 +1,11 @@
 // Configuração do Telegram Bot
-const TELEGRAM_BOT_TOKEN = '8289552526:AAE5OeBjIzkfVdD4yZXeNqYZ0K7pwwjqHLI';
+require('dotenv').config();
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+if (!TELEGRAM_BOT_TOKEN) {
+    console.warn('⚠️  ATENÇÃO: Configure o token do Telegram no arquivo .env');
+}
 
 module.exports = {
     TELEGRAM_BOT_TOKEN
