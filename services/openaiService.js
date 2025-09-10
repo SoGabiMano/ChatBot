@@ -126,11 +126,11 @@ class OpenAIService {
             // Inglês (nomes oficiais da API)
             'normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 
             'ghost', 'steel', 'fire', 'water', 'grass', 'electric', 'psychic', 
-            'ice', 'dragon', 'dark', 'fairy', 'stellar', 'unknown',
+            'ice', 'dragon', 'dark', 'fairy',
             // Português
             'fogo', 'água', 'água', 'elétrico', 'elétrico', 'grama', 'gelo', 
             'lutador', 'veneno', 'terrestre', 'voador', 'psíquico', 'inseto',
-            'pedra', 'fantasma', 'dragão', 'sombrio', 'metal', 'fada', 'estelar'
+            'pedra', 'fantasma', 'dragão', 'sombrio', 'metal', 'fada'
         ];
         
         const isValid = validTypes.includes(type.toLowerCase());
@@ -162,7 +162,6 @@ class OpenAIService {
             'sombrio': 'dark',
             'metal': 'steel',
             'fada': 'fairy',
-            'estelar': 'stellar',
             'normal': 'normal'
         };
         
