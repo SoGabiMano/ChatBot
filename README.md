@@ -50,6 +50,7 @@ Retorna resposta para o usuário
    Crie um arquivo `.env` na raiz do projeto:
    ```env
    OPENAI_API_KEY=sua_chave_da_openai_aqui
+   TELEGRAM_BOT_TOKEN=seu_token_do_telegram_aqui
    PORT=3000
    ```
 
@@ -84,6 +85,7 @@ ChatBot/
 | Variável | Descrição | Obrigatória |
 |----------|-----------|-------------|
 | `OPENAI_API_KEY` | Chave da API da OpenAI | ✅ |
+| `TELEGRAM_BOT_TOKEN` | Token do bot do Telegram | ✅ (para bot) |
 | `PORT` | Porta do servidor (padrão: 3000) | ❌ |
 
 ### Obter Chave da OpenAI
@@ -93,6 +95,14 @@ ChatBot/
 3. Vá para "API Keys"
 4. Crie uma nova chave
 5. Copie e cole no arquivo `.env`
+
+### Obter Token do Telegram
+
+1. Acesse [@BotFather](https://t.me/botfather) no Telegram
+2. Envie `/newbot` para criar um novo bot
+3. Escolha um nome e username para seu bot
+4. Copie o token fornecido
+5. Cole no arquivo `.env` como `TELEGRAM_BOT_TOKEN`
 
 ## 🎯 Como Usar
 
