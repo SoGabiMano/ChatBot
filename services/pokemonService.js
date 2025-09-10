@@ -12,7 +12,10 @@ class PokemonService {
      */
     async getPokemon(identifier) {
         try {
-            const url = `${this.baseURL}/${identifier}`;
+            // Limpar e validar o identifier
+            const cleanIdentifier = identifier.toString().trim().toLowerCase();
+            
+            const url = `${this.baseURL}/${cleanIdentifier}`;
             console.log(`📡 Iniciando requisição HTTP GET para: ${url}`);
             
             const response = await axios.get(url);
@@ -41,10 +44,10 @@ class PokemonService {
             return pokemonData;
         } catch (error) {
             console.log(`💥 Erro na requisição HTTP:`);
-            console.log(`   URL: ${this.baseURL}/${identifier}`);
+            console.log(`   URL: ${this.baseURL}/${cleanIdentifier}`);
             console.log(`   Status: ${error.response?.status || 'N/A'}`);
             console.log(`   Mensagem: ${error.message}`);
-            throw new Error(`Pokémon não encontrado: ${identifier}`);
+            throw new Error(`Pokémon não encontrado: ${cleanIdentifier}`);
         }
     }
 

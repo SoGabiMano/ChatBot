@@ -53,7 +53,7 @@ app.post('/api/chat', async (req, res) => {
             if (detection.type === 'pokemon_name') {
                 // Se detectou um Pokémon, buscar dados na API
                 try {
-                    console.log(`🔍 Detectado Pokémon: ${detection.value}`);
+                    console.log(`🔍 Detectado Pokémon: "${detection.value}"`);
                     console.log(`🌐 Fazendo requisição para: https://pokeapi.co/api/v2/pokemon/${detection.value}`);
                     
                     pokemonData = await pokemonService.getPokemon(detection.value);
