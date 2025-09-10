@@ -27,14 +27,15 @@ class SpellCorrectionService {
 TAREFA: Corrigir apenas erros óbvios de digitação, mantendo a intenção original da mensagem.
 
 REGRAS:
-1. Corrija apenas erros claros de digitação (ex: "charizad" → "charizard")
+1. Corrija apenas erros claros de digitação (ex: charizad → charizard)
 2. Mantenha a estrutura e intenção da mensagem
 3. NÃO altere palavras que estão corretas
 4. Foque em nomes de Pokémon e tipos
 5. Se não houver erros óbvios, retorne a mensagem original
 6. Responda APENAS com a mensagem corrigida, sem explicações
+7. NÃO adicione aspas duplas na resposta
 
-MENSAGEM ORIGINAL: "${message}"
+MENSAGEM ORIGINAL: ${message}
 
 MENSAGEM CORRIGIDA:`;
 
@@ -50,7 +51,19 @@ MENSAGEM CORRIGIDA:`;
                 temperature: 0.1, // Baixa temperatura para correções precisas
             });
 
-            const correctedMessage = completion.choices[0].message.content.trim();
+            const rawResponse = completion.choices[0].message.content;
+            // Limpar aspas duplas que possam ter sido adicionadas pela IA
+            let correctedMessage = rawResponse.trim();
+            
+            // Remover aspas duplas do início e fim se existirem
+            if (correctedMessage.startsWith('"') && correctedMessage.endsWith('"')) {
+                correctedMessage = correctedMessage.slice(1, -1);
+            }
+            
+            // Log apenas se houver mudança significativa
+            if (correctedMessage !== message) {
+                console.log(`🔍 Correção aplicada: "${message}" → "${correctedMessage}"`);
+            }
             
             // Verificar se houve mudança significativa
             if (correctedMessage !== message && correctedMessage.length > 0) {
