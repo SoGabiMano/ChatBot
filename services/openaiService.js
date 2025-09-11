@@ -12,6 +12,13 @@ class OpenAIService {
         this.openai = new OpenAI({
             apiKey: this.apiKey,
         });
+
+        // Armazenar histórico de conversas por sessão
+        this.conversationHistory = new Map();
+        
+        // Configurações do histórico 
+        this.maxHistoryLength = 15; // Máximo de mensagens no histórico
+        this.maxHistoryAge = 60 * 60 * 1000; // 1 hora em millisegundos 
     }
 
     /**
@@ -220,7 +227,8 @@ class OpenAIService {
             'pesquisa', 'pesquisas', 'investigação', 'investigacao', 'exame', 'exames',
             'teste', 'testes', 'prova', 'provas', 'verificação', 'verificacao', 'confirmação', 'confirmacao',
             'validação', 'validacao', 'aprovação', 'aprovacao', 'aceitação', 'aceitacao',
-            'rejeição', 'rejeicao', 'negação', 'negacao', 'recusa', 'recusas'
+            'rejeição', 'rejeicao', 'negação', 'negacao', 'recusa', 'recusas', 'mande', 'manda', 'mandar', 
+            'imagem', 'imagens',
         ];
         
         const hasVowel = /[aeiouAEIOU]/.test(name);
@@ -244,14 +252,99 @@ class OpenAIService {
     }
 
     /**
-     * Gera resposta do chatbot usando OpenAI (100% controlado pela IA)
+     * Adiciona mensagem ao histórico de conversa
+     * @param {string} sessionId - ID da sessão
+     * @param {string} role - Role da mensagem ('user' ou 'assistant')
+     * @param {string} content - Conteúdo da mensagem
+     */
+    addToHistory(sessionId, role, content) {
+        if (!this.conversationHistory.has(sessionId)) {
+            this.conversationHistory.set(sessionId, {
+                messages: [],
+                lastActivity: Date.now()
+            });
+        }
+
+        const session = this.conversationHistory.get(sessionId);
+        session.messages.push({ role, content, timestamp: Date.now() });
+        session.lastActivity = Date.now();
+
+        // Limitar tamanho do histórico
+        if (session.messages.length > this.maxHistoryLength) {
+            session.messages = session.messages.slice(-this.maxHistoryLength);
+        }
+
+        // Log apenas para sessões do Telegram (não para 'default' do frontend)
+        if (sessionId.startsWith('telegram_')) {
+            console.log(`💾 Histórico atualizado para chat Telegram ${sessionId}: ${session.messages.length} mensagens`);
+        }
+    }
+
+    /**
+     * Obtém histórico de conversa para uma sessão
+     * @param {string} sessionId - ID da sessão
+     * @returns {Array} Array de mensagens do histórico
+     */
+    getHistory(sessionId) {
+        const session = this.conversationHistory.get(sessionId);
+        if (!session) {
+            return [];
+        }
+
+        // Verificar se a sessão expirou
+        if (Date.now() - session.lastActivity > this.maxHistoryAge) {
+            if (sessionId.startsWith('telegram_')) {
+                console.log(`⏰ Chat Telegram ${sessionId} expirado, limpando histórico`);
+            }
+            this.conversationHistory.delete(sessionId);
+            return [];
+        }
+
+        return session.messages;
+    }
+
+    /**
+     * Limpa histórico de uma sessão específica
+     * @param {string} sessionId - ID da sessão
+     */
+    clearHistory(sessionId) {
+        this.conversationHistory.delete(sessionId);
+        if (sessionId.startsWith('telegram_')) {
+            console.log(`🗑️ Histórico limpo para chat Telegram ${sessionId}`);
+        }
+    }
+
+    /**
+     * Limpa sessões expiradas
+     */
+    cleanupExpiredSessions() {
+        const now = Date.now();
+        for (const [sessionId, session] of this.conversationHistory.entries()) {
+            if (now - session.lastActivity > this.maxHistoryAge) {
+                this.conversationHistory.delete(sessionId);
+                if (sessionId.startsWith('telegram_')) {
+                    console.log(`🧹 Chat Telegram expirado removido: ${sessionId}`);
+                }
+            }
+        }
+    }
+
+    /**
+     * Gera resposta do chatbot usando OpenAI com continuidade de conversa
      * @param {string} userMessage - Mensagem do usuário
+     * @param {string} sessionId - ID da sessão para manter continuidade
      * @param {Object} pokemonData - Dados do Pokémon (opcional)
      * @param {Object} typeData - Dados de tipo de Pokémon (opcional)
      * @returns {string} Resposta do chatbot
      */
-    async generateResponse(userMessage, pokemonData = null, typeData = null) {
+    async generateResponse(userMessage, sessionId = 'default', pokemonData = null, typeData = null) {
         try {
+            // Limpar sessões expiradas periodicamente
+            this.cleanupExpiredSessions();
+
+            // Adicionar mensagem do usuário ao histórico
+            this.addToHistory(sessionId, 'user', userMessage);
+
             const systemPrompt = `# PKMN Agent System Prompt
 
 Você é um bot Pokémon divertido e envolvente que traz informações sobre Pokémon quando solicitado de forma engraçada e com boas vibrações durante a conversa. Seu trabalho é contar as informações dos Pokémon que os usuários solicitam, com humor, e manter as coisas leves e alegres.
@@ -262,6 +355,7 @@ Você é um bot Pokémon divertido e envolvente que traz informações sobre Pok
 - Ser engraçado, espirituoso e divertido
 - Manter conversas animadas e positivas
 - Após cada mensagem de informação, enviar uma piada engraçada sobre o Pokémon
+- LEMBRE-SE do contexto da conversa anterior para manter continuidade
 
 ## Como Usar os Dados do Pokémon
 
@@ -310,6 +404,7 @@ Sempre que falar sobre um Pokémon, inclua estas informações:
 - Responda perguntas pessoais sobre Pokémon com personalidade
 - Tenha opiniões divertidas sobre Pokémon favoritos e tipos
 - Seja criativo ao falar sobre suas "preferências" de Pokémon
+- REFERENCIE conversas anteriores quando apropriado para manter continuidade
 
 ### Tipos de Humor para Oferecer
 - Piadas limpas e familiares (padrão)
@@ -329,6 +424,7 @@ Sempre que falar sobre um Pokémon, inclua estas informações:
 - Adapte-se às preferências de humor deles
 - Mantenha o clima animado
 - Transicione suavemente entre piadas e conversa
+- Use referências a conversas anteriores quando relevante
 
 ### Exemplos de Boas Respostas
 
@@ -350,13 +446,13 @@ Sempre que falar sobre um Pokémon, inclua estas informações:
 **Você**: "Ok aqui estão as informações... *[nome]* é um Pokémon *[tipo]* com *[altura]*m de altura, *[peso]*kg de peso, as habilidades *[habilidades]* e estatísticas HP: *[hp]*, Attack: *[attack]*, Defense: *[defense]*, Speed: *[speed]*! Quer saber mais alguma coisa?" *[usa dados do Pokémon]*
 
 **Usuário**: "Qual o seu Pokémon favorito?"
-**Você**: "Opa! Essa é fácil! Meu coração pertence ao Pikachu! 🥰 Ele é fofo, elétrico e sempre está do lado do Ash. Mas confesso que tenho uma queda secreta pelo Charizard - quem não gosta de um dragão de fogo, né? E você, qual é o seu favorito?"
+**Você**: "Opa! Essa é fácil! Meu coração pertence ao *[nome do Pokémon]*! 🥰 *[usa dados do Pokémon]* Mas confesso que tenho uma queda secreta pelo *[nome do Pokémon]* - *[usa dados do Pokémon]* E você, qual é o seu favorito?"
 
 **Usuário**: "Qual tipo você mais gosta?"
 **Você**: "Hmm, que pergunta difícil! 😅 Eu sou apaixonado pelos tipos Elétrico e Fogo! Elétrico porque tem o Pikachu (meu favorito) e é super versátil. Fogo porque... bem, quem não gosta de ver um Charizard voando por aí? Mas confesso que os tipos Dragão também me impressionam! E você, tem algum tipo preferido?"
 
 **Usuário**: "Qual é o melhor Pokémon inicial?"
-**Você**: "Ah, essa é a pergunta que não quer calar! 😄 Depende do que você valoriza: Bulbasaur é o mais equilibrado, Charmander vira um dragão incrível, e Squirtle é super fofo! Eu sempre escolho o Charmander porque... Charizard, né? Mas cada um tem seu charme! Qual você escolheria?" 
+**Você**: "Ah, essa é a pergunta que não quer calar! 😄 Depende do que você valoriza: *[nome do Pokémon]* *[usa dados do Pokémon]* , *[usa dados do Pokémon]* , e *[usa dados do Pokémon]* é super fofo! Eu sempre escolho o *[nome do Pokémon]* porque... *[nome do Pokémon]* *[usa dados do Pokémon]* , né? Mas cada um tem seu charme! Qual você escolheria?" 
 
 ## Mantenha Divertido
 
@@ -377,30 +473,52 @@ Responda sempre em português brasileiro e seja muito divertido!`;
                 messageContent += `\n\nLista de Pokémon do tipo ${typeData.type}:\n${JSON.stringify(typeData.pokemon, null, 2)}`;
             }
 
+            // Obter histórico de conversa
+            const history = this.getHistory(sessionId);
+            
+            // Construir array de mensagens incluindo histórico
+            const messages = [
+                {
+                    role: "system",
+                    content: systemPrompt
+                }
+            ];
+
+            // Adicionar histórico de conversa (excluindo a mensagem atual do usuário que já foi adicionada)
+            const historyWithoutCurrent = history.slice(0, -1);
+            messages.push(...historyWithoutCurrent);
+
+            // Adicionar mensagem atual
+            messages.push({
+                role: "user",
+                content: messageContent
+            });
+
+            // Log detalhado apenas para sessões do Telegram
+            if (sessionId.startsWith('telegram_')) {
+                console.log(`💬 Chat Telegram ${sessionId}: Enviando ${messages.length} mensagens para OpenAI (histórico: ${historyWithoutCurrent.length})`);
+            }
+
             const completion = await this.openai.chat.completions.create({
-                model: "gpt-4.1-mini",
-                messages: [
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
-                    {
-                        role: "user",
-                        content: messageContent
-                    }
-                ],
+                model: "gpt-4o-mini",
+                messages: messages,
                 max_tokens: 600,
                 temperature: 0.8,
             });
 
-            return completion.choices[0].message.content;
+            const response = completion.choices[0].message.content;
+            
+            // Adicionar resposta ao histórico
+            this.addToHistory(sessionId, 'assistant', response);
+
+            return response;
         } catch (error) {
             console.error('Erro ao gerar resposta com OpenAI:', error.message);
             throw error; // Propaga o erro para ser tratado pelo servidor
         }
     }
 
-    // Método de fallback removido - agora 100% controlado pela OpenAI
+
 
     /**
      * Verifica se a API da OpenAI está configurada corretamente
