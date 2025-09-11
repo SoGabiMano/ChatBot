@@ -14,7 +14,7 @@ class TelegramService {
     }
 
     setupHandlers() {
-        // Mensagens de texto (conversas naturais)
+        // Mensagens de texto 
         this.bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
             const message = msg.text;
@@ -63,8 +63,9 @@ class TelegramService {
                     }
                 }
 
-                // Gerar resposta usando OpenAI com a mensagem corrigida
-                const response = await this.openaiService.generateResponse(correctedMessage, pokemonData, typeData);
+                // Gerar resposta usando OpenAI com a mensagem corrigida e sessionId baseado no chatId
+                const sessionId = `telegram_${chatId}`;
+                const response = await this.openaiService.generateResponse(correctedMessage, sessionId, pokemonData, typeData);
                 
                 this.bot.sendMessage(chatId, response, { parse_mode: 'Markdown' });
             } catch (error) {

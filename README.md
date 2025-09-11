@@ -1,20 +1,22 @@
-# 🤖 ChatBot Pokémon com OpenAI
+# 🤖 Bot Pokémon do Telegram com OpenAI
 
-Um chatbot inteligente que se conecta com a API do Pokémon e utiliza a OpenAI para gerar respostas divertidas e informativas sobre qualquer Pokémon.
+Um bot inteligente do Telegram que se conecta com a API do Pokémon e utiliza a OpenAI para gerar respostas divertidas e informativas sobre qualquer Pokémon, com continuidade de conversa.
 
 ## ✨ Funcionalidades
 
 - 🔍 **Detecção Inteligente**: Detecta automaticamente quando o usuário pergunta sobre um Pokémon
 - 🌐 **Integração com API**: Busca dados reais na [PokéAPI](https://pokeapi.co/)
-- 🤖 **IA Avançada**: Utiliza OpenAI GPT-3.5-turbo para respostas divertidas e precisas
+- 🤖 **IA Avançada**: Utiliza OpenAI GPT-4o-mini para respostas divertidas e precisas
+- 💬 **Continuidade de Conversa**: Lembra do contexto da conversa para respostas mais naturais
 - 📊 **Dados Completos**: Altura, peso, tipos, habilidades, estatísticas e sprites
 - 🎭 **Humor**: Respostas engraçadas e envolventes sobre Pokémon
 - 🔧 **Logs Detalhados**: Monitoramento completo do fluxo de requisições
+- ⏰ **Gerenciamento de Sessões**: Limpeza automática de conversas antigas
 
 ## 🚀 Como Funciona
 
 ```
-Usuário: "Me fale sobre Pikachu"
+Usuário no Telegram: "Me fale sobre Pikachu"
     ↓
 Sistema detecta "Pikachu" na mensagem
     ↓
@@ -24,7 +26,19 @@ Recebe dados completos do Pokémon
     ↓
 OpenAI gera resposta divertida com as informações
     ↓
-Retorna resposta para o usuário
+Salva no histórico da conversa (sessionId: telegram_123456)
+    ↓
+Retorna resposta para o usuário no Telegram
+
+Usuário: "E o Charizard?"
+    ↓
+Sistema busca histórico da conversa
+    ↓
+OpenAI recebe contexto completo (incluindo Pikachu anterior)
+    ↓
+Gera resposta referenciando conversa anterior
+    ↓
+"Ah, o Charizard! Diferente do Pikachu que acabamos de ver..."
 ```
 
 ## 📋 Pré-requisitos
@@ -54,26 +68,26 @@ Retorna resposta para o usuário
    PORT=3000
    ```
 
-4. **Execute o servidor:**
+4. **Execute o bot:**
    ```bash
    npm start
    ```
 
-5. **Acesse a aplicação:**
-   Abra seu navegador em `http://localhost:3000`
+5. **Use o bot no Telegram:**
+   Procure pelo seu bot no Telegram e inicie uma conversa
 
 ## 📁 Estrutura do Projeto
 
 ```
 ChatBot/
-├── public/
-│   ├── index.html          # Interface do usuário
-│   ├── script.js           # JavaScript do frontend
-│   └── styles.css          # Estilos CSS
+├── config/
+│   └── telegram.js         # Configuração do Telegram
 ├── services/
-│   ├── openaiService.js    # Serviço da OpenAI
-│   └── pokemonService.js   # Serviço da PokéAPI
-├── server.js               # Servidor Express
+│   ├── openaiService.js    # Serviço da OpenAI com continuidade
+│   ├── pokemonService.js   # Serviço da PokéAPI
+│   ├── telegramService.js  # Serviço do Telegram
+│   └── spellCorrectionService.js # Correção de digitação
+├── server.js               # Inicializador do bot
 ├── package.json            # Dependências do projeto
 └── README.md              # Documentação
 ```
@@ -85,8 +99,7 @@ ChatBot/
 | Variável | Descrição | Obrigatória |
 |----------|-----------|-------------|
 | `OPENAI_API_KEY` | Chave da API da OpenAI | ✅ |
-| `TELEGRAM_BOT_TOKEN` | Token do bot do Telegram | ✅ (para bot) |
-| `PORT` | Porta do servidor (padrão: 3000) | ❌ |
+| `TELEGRAM_BOT_TOKEN` | Token do bot do Telegram | ✅ |
 
 ### Obter Chave da OpenAI
 
@@ -105,6 +118,20 @@ ChatBot/
 5. Cole no arquivo `.env` como `TELEGRAM_BOT_TOKEN`
 
 ## 🎯 Como Usar
+
+### Exemplos de Conversas no Telegram
+
+**Conversa com continuidade:**
+```
+Usuário: "Me fale sobre Pikachu"
+Bot: [Informações completas sobre Pikachu + piada]
+
+Usuário: "E o Charizard?"
+Bot: "Ah, o Charizard! Diferente do Pikachu que acabamos de ver, o Charizard é um dragão de fogo incrível..."
+
+Usuário: "Qual é mais forte?"
+Bot: "Boa pergunta! Comparando o Pikachu com o Charizard que mencionamos..."
+```
 
 ### Exemplos de Mensagens que Funcionam
 
@@ -142,6 +169,7 @@ Para cada Pokémon, a API retorna:
 O sistema gera logs detalhados para debug:
 
 ```
+💬 Chat Telegram telegram_123456: Enviando 3 mensagens para OpenAI (histórico: 2)
 🔍 Detectado Pokémon: pikachu
 🌐 Fazendo requisição para: https://pokeapi.co/api/v2/pokemon/pikachu
 📡 Iniciando requisição HTTP GET para: https://pokeapi.co/api/v2/pokemon/pikachu
@@ -153,6 +181,7 @@ O sistema gera logs detalhados para debug:
 🏷️ Tipos: electric
 💪 Habilidades: static, lightning-rod
 📏 Altura: 0.4m | Peso: 6kg
+💾 Histórico atualizado para chat Telegram telegram_123456: 3 mensagens
 ```
 
 ## 🛡️ Tratamento de Erros
@@ -165,7 +194,7 @@ O sistema gera logs detalhados para debug:
 ## 🚀 Scripts Disponíveis
 
 ```bash
-# Iniciar servidor
+# Iniciar bot do Telegram
 npm start
 
 # Desenvolvimento com auto-reload
