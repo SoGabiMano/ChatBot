@@ -123,11 +123,10 @@ E muitos outros! Quer saber mais sobre algum específico? Posso te contar tudo s
 
 ## 🎯 **Próximos Passos:**
 
-1. **Teste local**: `npm start`
-2. **Interface web**: Acesse `http://localhost:3000`
-3. **Bot Telegram**: Configure o bot para usar via Telegram
-4. **Pergunte**: "Quais são os pokemon do tipo água?"
-5. **Veja a mágica** acontecer! ✨
+1. **Teste local**: `npm run dev`
+2. **Bot Telegram**: Configure o bot para usar via Telegram
+3. **Pergunte**: "Quais são os pokemon do tipo água?"
+4. **Veja a mágica** acontecer! ✨
 
 ---
 
